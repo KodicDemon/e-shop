@@ -18,7 +18,7 @@ const Menu = () => {
         <ModeToggle />
         <Button asChild variant="ghost">
           <Link href={`/cart`}>
-            <ShoppingCart /> Cart
+            <ShoppingCart /> Cartt
           </Link>
         </Button>
         <UserButton></UserButton>
