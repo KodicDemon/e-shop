@@ -1,5 +1,6 @@
-import { FormEvent, useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { Button } from "@/components/ui/button";
+import { SERVER_URL } from "@/lib/constants";
+import { formatCurrency } from "@/lib/utils";
 import {
   Elements,
   LinkAuthenticationElement,
@@ -7,10 +8,10 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js/pure";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
-import { SERVER_URL } from "@/lib/constants";
+import { FormEvent, useState } from "react";
+
 const StripePayment = ({
   priceInCents,
   orderId,
@@ -25,18 +26,19 @@ const StripePayment = ({
   );
   const { theme, systemTheme } = useTheme();
 
-  //Stripe Form Component
+  // Stripe Form Component
   const StripeForm = () => {
     const stripe = useStripe();
     const elements = useElements();
 
     const [isLoading, setIsLoading] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-    const [email, setEmail] = useState("");
-    const handleSubmit = async (e: FormEvent) => {
+    const [errorMessage, setErrorMessage] = useState<string>();
+    const [email, setEmail] = useState<string>();
+
+    // Handle StripeForm submission
+    async function handleSubmit(e: FormEvent) {
       e.preventDefault();
       if (stripe == null || elements == null || email == null) return;
-
       setIsLoading(true);
       stripe
         .confirmPayment({
@@ -47,23 +49,22 @@ const StripePayment = ({
         })
         .then(({ error }) => {
           if (
-            error?.type === "card_error" ||
-            error?.type === "validation_error"
+            error.type === "card_error" ||
+            error.type === "validation_error"
           ) {
-            setErrorMessage(error?.message ?? "An unknown error occurred");
-          } else if (error) {
+            setErrorMessage(error.message);
+          } else {
             setErrorMessage("An unknown error occurred");
           }
         })
         .finally(() => setIsLoading(false));
-    };
+    }
 
+    // return for StripeForm
     return (
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="text-xl">Stripe Checkout</div>
-        {errorMessage && (
-          <div className="text-destructive>">{errorMessage}</div>
-        )}
+        {errorMessage && <div className="text-destructive">{errorMessage}</div>}
         <PaymentElement />
         <div>
           <LinkAuthenticationElement
@@ -77,12 +78,13 @@ const StripePayment = ({
         >
           {isLoading
             ? "Purchasing..."
-            : `Purchase ${formatCurrency(priceInCents / 100)}`}
+            : `Purchase - ${formatCurrency(priceInCents / 100)}`}
         </Button>
       </form>
     );
   };
 
+  // Return for StripePayment
   return (
     <Elements
       options={{
