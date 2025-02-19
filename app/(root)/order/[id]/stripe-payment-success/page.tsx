@@ -31,17 +31,18 @@ const SuccessPage = async (props: {
     return notFound();
   }
 
-  //Check if payment is successful
+  // Check if the payment intent is successful
   const isSuccess = paymentIntent.status === "succeeded";
-  if (!isSuccess) redirect(`/order${id}`);
+
+  if (!isSuccess) return redirect(`/order/${id}`);
 
   return (
     <div className="max-w-4xl w-full mx-auto space-y-8">
-      <div className="flex flex-col gap-6 items-center">
+      <div className="flex flex-col gap-6 items-center ">
         <h1 className="h1-bold">Thanks for your purchase</h1>
-        <div>We are processing your order.</div>
+        <div>We are now processing your order.</div>
         <Button asChild>
-          <Link href={`/order/${id}`}>View Order</Link>
+          <Link href={`/order/${id}`}>View order</Link>
         </Button>
       </div>
     </div>
