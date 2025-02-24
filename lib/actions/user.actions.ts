@@ -52,7 +52,7 @@ export async function signOutUser() {
   }
 
   // Sign out the user and redirect to the main page
-  await signOut();
+  await signOut({ redirectTo: "/" });
 }
 
 //Sign up user
