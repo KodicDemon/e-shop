@@ -25,7 +25,7 @@ export async function createOrder(
   // testnout jestli sem leze co má
   try {
     // @ts-ignore
-    let user: any; // asi userObject
+    let user: typeof user;
 
     if (shipAddress == null && paymentMethod == null) {
       //jsi prihlaseny, shipAddress a paymentMethod jsou prazdné (nic jsi tam jako anonym neukladal do coockies)
