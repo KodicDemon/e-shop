@@ -1,5 +1,7 @@
 "use client";
 
+import Cookies from "js-cookie";
+
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition } from "react";
@@ -38,13 +40,19 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
     values
   ) => {
     startTransition(async () => {
-      const res = await updateUserAddress(values);
-      if (!res.success) {
-        toast({
-          variant: "destructive",
-          description: res.message,
-        });
-        return;
+      if (address === null) {
+        Cookies.set("guestAddress", JSON.stringify(values), {
+          expires: 1,
+        }); // Expires in 1 day
+      } else {
+        const res = await updateUserAddress(values);
+        if (!res.success) {
+          toast({
+            variant: "destructive",
+            description: res.message,
+          });
+          return;
+        }
       }
       router.push("/payment-method");
     });
@@ -177,6 +185,36 @@ const ShippingAddressForm = ({ address }: { address: ShippingAddress }) => {
               )}
             />
           </div>
+          {!address && (
+            <div className="flex flex-col gap-5 md:flex-row">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<
+                    z.infer<typeof shippingAddressSchema>,
+                    "email"
+                  >;
+                }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter Email"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button type="submit" disabled={isPending}>
               {isPending ? (

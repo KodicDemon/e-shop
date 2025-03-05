@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { updateUserPaymentMethod } from "@/lib/actions/user.actions";
-
+import Cookies from "js-cookie";
 const PaymentMethodForm = ({
   preferredPaymentMethod,
 }: {
@@ -40,13 +40,19 @@ const PaymentMethodForm = ({
   const [isPending, startTransition] = useTransition();
   const onSubmit = async (values: z.infer<typeof paymentMethodSchema>) => {
     startTransition(async () => {
-      const res = await updateUserPaymentMethod(values);
-      if (!res.success) {
-        toast({
-          variant: "destructive",
-          description: res.message,
-        });
-        return;
+      if (preferredPaymentMethod === null) {
+        Cookies.set("guestPayment", JSON.stringify(values), {
+          expires: 1,
+        }); // Expires in 1 day
+      } else {
+        const res = await updateUserPaymentMethod(values);
+        if (!res.success) {
+          toast({
+            variant: "destructive",
+            description: res.message,
+          });
+          return;
+        }
       }
       router.push("/place-order");
     });

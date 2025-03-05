@@ -76,6 +76,7 @@ export const shippingAddressSchema = z.object({
   city: z.string().min(3, "City must be at least 3 characters"),
   postalCode: z.string().min(3, "Postal code must be at least 3 characters"),
   country: z.string().min(3, "Country must be at least 3 characters"),
+  email: z.string().email("Invalid email address").optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
 });
@@ -92,7 +93,7 @@ export const paymentMethodSchema = z
 
 // Schema for inserting order
 export const insertOrderSchema = z.object({
-  userId: z.string().min(1, "User is required"),
+  userId: z.string().min(1, "User is required").nullable(),
   itemsPrice: currency,
   shippingPrice: currency,
   taxPrice: currency,

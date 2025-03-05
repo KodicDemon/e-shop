@@ -13,18 +13,43 @@ import { revalidatePath } from "next/cache";
 import { PAGE_SIZE } from "../constants";
 import { Prisma } from "@prisma/client";
 import { sendPurchaseReceipt } from "@/email";
+import { cookies } from "next/headers";
 
 //Create order and create the order items
-export async function createOrder() {
+export async function createOrder(shipAddress: any, paymentMethod: any) {
+  console.log("createOrder Ship: ", JSON.stringify(shipAddress));
+  console.log("createOrder payMent: ", JSON.stringify(paymentMethod));
+  // testnout jestli sem leze co má
   try {
-    const session = await auth();
-    if (!session) throw new Error("User is not authenticated");
+    let user: any; // asi userObject
+
+    if (shipAddress == null && paymentMethod == null) {
+      //jsi prihlaseny, shipAddress a paymentMethod jsou prazdné (nic jsi tam jako anonym neukladal do coockies)
+      const session = await auth();
+      if (!session) throw new Error("User is not authenticated");
+
+      const userId = session?.user?.id;
+      if (!userId) throw new Error("User not found");
+      user = await getUserById(userId);
+
+      if (!user.paymentMethod) {
+        return {
+          success: false,
+          message: "No payment method",
+          redirectTo: "/payment-method",
+        };
+      }
+
+      if (!user.address) {
+        return {
+          success: false,
+          message: "No shipping address",
+          redirectTo: "/shipping-address",
+        };
+      }
+    }
 
     const cart = await getMyCart();
-    const userId = session?.user?.id;
-    if (!userId) throw new Error("User not found");
-
-    const user = await getUserById(userId);
     if (!cart || cart.items.length === 0) {
       return {
         success: false,
@@ -33,31 +58,31 @@ export async function createOrder() {
       };
     }
 
-    if (!user.paymentMethod) {
-      return {
-        success: false,
-        message: "No payment method",
-        redirectTo: "/payment-method",
-      };
-    }
-
-    if (!user.address) {
-      return {
-        success: false,
-        message: "No shipping address",
-        redirectTo: "/shipping-address",
-      };
-    }
-    // Create order object
-    const order = insertOrderSchema.parse({
-      userId: user.id,
-      shippingAddress: user.address,
-      paymentMethod: user.paymentMethod,
+    console.log("testObject: ", {
+      userId: shipAddress == null && paymentMethod == null ? user.id : null,
+      shippingAddress: shipAddress == null ? user.address : shipAddress, // nevim, jestli shipAddress ma stejny format jako user.address
+      paymentMethod:
+        paymentMethod == null ? user.paymentMethod : paymentMethod.type, // nevim, jestli paymentMethod ma stejny format jako user.paymentMethod
       itemsPrice: cart.itemsPrice,
       shippingPrice: cart.shippingPrice,
       taxPrice: cart.taxPrice,
       totalPrice: cart.totalPrice,
     });
+
+    // Create order object
+    const order = insertOrderSchema.parse({
+      userId: shipAddress == null && paymentMethod == null ? user.id : null,
+      shippingAddress: shipAddress == null ? user.address : shipAddress, // nevim, jestli shipAddress ma stejny format jako user.address
+      paymentMethod:
+        paymentMethod == null ? user.paymentMethod : paymentMethod.type, // nevim, jestli paymentMethod ma stejny format jako user.paymentMethod
+      itemsPrice: cart.itemsPrice,
+      shippingPrice: cart.shippingPrice,
+      taxPrice: cart.taxPrice,
+      totalPrice: cart.totalPrice,
+    });
+
+    // ------------
+
     // Create a transaction to create order and order items in database
     const insertedOrderId = await prisma.$transaction(async (tx) => {
       // Create order
@@ -87,12 +112,20 @@ export async function createOrder() {
     });
 
     if (!insertedOrderId) throw new Error("Order not created");
+
+    if (shipAddress !== null || paymentMethod !== null) {
+      (await cookies()).delete("guestAddress");
+      (await cookies()).delete("guestPayment");
+      console.log("Guest cookies deleted after order placement");
+    }
+
     return {
       success: true,
       message: "Order created",
       redirectTo: `/order/${insertedOrderId}`,
     };
   } catch (error) {
+    console.log(error);
     if (isRedirectError(error)) throw error;
     return {
       success: false,
@@ -243,12 +276,17 @@ export async function updateOrderToPaid({
     });
   });
 
+  const guestAddress = (await cookies()).get("guestAddress");
+  const guestPayment = (await cookies()).get("guestPayment");
+
+  const includeUser = !guestAddress && !guestPayment;
+
   //Get updated order after transaction
   const updatedOrder = await prisma.order.findFirst({
     where: { id: orderId },
     include: {
       orderitems: true,
-      user: { select: { name: true, email: true } },
+      ...(includeUser && { user: { select: { name: true, email: true } } }),
     },
   });
 
@@ -259,6 +297,9 @@ export async function updateOrderToPaid({
       ...updatedOrder,
       shippingAddress: updatedOrder.shippingAddress as ShippingAddress,
       paymentResult: updatedOrder.paymentResult as PaymentResult,
+      user: updatedOrder.user
+        ? { name: updatedOrder.user.name, email: updatedOrder.user.email }
+        : undefined,
     },
   });
 }

@@ -19,6 +19,8 @@ import {
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
 import PlaceOrderForm from "./place-order-form";
+import Cookies from "js-cookie";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Place Order",
@@ -26,16 +28,38 @@ export const metadata: Metadata = {
 
 const PlaceOrderPage = async () => {
   const cart = await getMyCart();
+  if (!cart || cart.items.length === 0) redirect("/cart");
+
   const session = await auth();
   const userId = session?.user?.id;
 
-  if (!userId) throw new Error("User not found");
+  /*  if (!userId) throw new Error("User not found");
   const user = await getUserById(userId);
-  if (!cart || cart.items.length === 0) redirect("/cart");
+ 
   if (!user.address) redirect("/shipping-address");
-  if (!user.paymentMethod) redirect("/payment-method");
+  if (!user.paymentMethod) redirect("/payment-method"); */
+  /*  const userAddress = user.address as ShippingAddress; */
 
-  const userAddress = user.address as ShippingAddress;
+  let userAddress = null;
+  let paymentMethod = null;
+
+  if (userId) {
+    // Fetch user details only if logged in
+    const user = await getUserById(userId);
+    userAddress = user.address as ShippingAddress;
+    console.log("jebin", user.paymentMethod);
+    paymentMethod = user.paymentMethod;
+    console.log("jebin2", paymentMethod);
+  } else {
+    const guestAddress = (await cookies()).get("guestAddress")?.value;
+    if (guestAddress) {
+      userAddress = JSON.parse(guestAddress);
+    }
+    const guestPayment = (await cookies()).get("guestPayment")?.value;
+    if (guestPayment) {
+      paymentMethod = JSON.parse(guestPayment).type;
+    }
+  }
 
   return (
     <>
@@ -46,11 +70,17 @@ const PlaceOrderPage = async () => {
           <Card>
             <CardContent className="p-4 gap-4">
               <h2 className="text-xl pb-4">Shipping Address</h2>
-              <p>{userAddress.fullName}</p>
-              <p>
-                {userAddress.streetAddress}, {userAddress.city}{" "}
-                {userAddress.postalCode}, {userAddress.country}{" "}
-              </p>
+              {userAddress ? (
+                <>
+                  <p>{userAddress.fullName}</p>
+                  <p>
+                    {userAddress.streetAddress}, {userAddress.city}{" "}
+                    {userAddress.postalCode}, {userAddress.country}{" "}
+                  </p>
+                </>
+              ) : (
+                <p className="text-gray-500">No address provided</p>
+              )}
               <div className="mt-3">
                 <Link href="/shipping-address">
                   <Button variant="outline">Edit</Button>
@@ -61,7 +91,7 @@ const PlaceOrderPage = async () => {
           <Card>
             <CardContent className="p-4 gap-4">
               <h2 className="text-xl pb-4">Payment Method</h2>
-              <p>{user.paymentMethod}</p>
+              <p>{paymentMethod}</p>
 
               <div className="mt-3">
                 <Link href="/payment-method">

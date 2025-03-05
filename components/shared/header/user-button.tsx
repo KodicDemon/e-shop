@@ -23,7 +23,9 @@ const UserButton = async () => {
     );
   }
 
-  const firstInitial = session.user?.name?.charAt(0).toUpperCase() ?? "U";
+  const firstInitial =
+    session.user?.name ??
+    "User"; /* session.user?.name?.charAt(0).toUpperCase() ?? "U"; když tam chci jen počáteční velké písmeno */
   return (
     <div className="flex gap-2 items-center">
       <DropdownMenu>
@@ -31,8 +33,10 @@ const UserButton = async () => {
           <div className="flex items-center">
             <Button
               variant="ghost"
-              className="relative w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200"
+              className="relative  rounded-lg flex items-center justify-center bg-gray-200"
             >
+              {" "}
+              <UserIcon className="" />
               {firstInitial}
             </Button>
           </div>
@@ -70,7 +74,7 @@ const UserButton = async () => {
           <DropdownMenuItem className="p-0 mb-1">
             <form action={signOutUser} className="w-full">
               <Button
-                className="w-full py-4 px-2 h-4 justify-start"
+                className="w-full sm:hidden md:flex py-4 px-2 h-4 justify-start"
                 variant="ghost"
               >
                 Sign Out

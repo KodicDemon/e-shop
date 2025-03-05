@@ -6,6 +6,7 @@ import { ShippingAddress } from "@/types";
 import { getUserById } from "@/lib/actions/user.actions";
 import ShippingAddressForm from "./shipping-address-form";
 import CheckoutSteps from "@/components/shared/checkout-steps";
+import Cookies from "js-cookie";
 
 export const metadata: Metadata = {
   title: "Shipping Address",
@@ -17,14 +18,22 @@ const ShippingAddressPage = async () => {
 
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) throw new Error("No user ID");
 
-  const user = await getUserById(userId);
+  let userAddress = null;
+
+  if (userId) {
+    // Fetch user address only if logged in
+    const user = await getUserById(userId);
+    userAddress = user.address || null;
+  }
+
+  /*  if (!userId) throw new Error("No user ID");
+const user = await getUserById(userId); */ //toto je pro případ, kdy kontroluji, zda je uživatel přihlášený a jen tomu přihlášenému umožním procceed to checkout
 
   return (
     <>
       <CheckoutSteps current={1} />
-      <ShippingAddressForm address={user.address as ShippingAddress} />
+      <ShippingAddressForm address={userAddress as ShippingAddress} />
     </>
   );
 };

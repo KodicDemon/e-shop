@@ -18,6 +18,7 @@ import { PAGE_SIZE } from "../constants";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { getMyCart } from "./cart.actions";
+import { cookies } from "next/headers";
 
 //Sign in user with credentials
 export async function signInWithCredentials(
@@ -31,6 +32,17 @@ export async function signInWithCredentials(
     });
 
     await signIn("credentials", user);
+
+    // 🚀 **Clear guest cookies after successful login**
+    if ((await cookies()).has("guestAddress")) {
+      (await cookies()).delete("guestAddress");
+      console.log("Deleted guestAddress cookie after login");
+    }
+    if ((await cookies()).has("guestPayment")) {
+      (await cookies()).delete("guestPayment");
+      console.log("Deleted guestPayment cookie after login");
+    }
+
     return { success: true, message: "Signed in successfully" };
   } catch (error) {
     if (isRedirectError(error)) {
