@@ -24,6 +24,7 @@ export async function createOrder(
   console.log("createOrder payMent: ", JSON.stringify(paymentMethod));
   // testnout jestli sem leze co má
   try {
+    //@ts-expect-error
     let user: typeof user;
 
     if (shipAddress == null && paymentMethod == null) {
