@@ -19,7 +19,7 @@ import {
 import Image from "next/image";
 import { formatCurrency } from "@/lib/utils";
 import PlaceOrderForm from "./place-order-form";
-import Cookies from "js-cookie";
+
 import { cookies } from "next/headers";
 
 export const metadata: Metadata = {

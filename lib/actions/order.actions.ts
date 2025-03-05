@@ -16,7 +16,10 @@ import { sendPurchaseReceipt } from "@/email";
 import { cookies } from "next/headers";
 
 //Create order and create the order items
-export async function createOrder(shipAddress: any, paymentMethod: any) {
+export async function createOrder(
+  shipAddress: ShippingAddress,
+  paymentMethod: { type: string }
+) {
   console.log("createOrder Ship: ", JSON.stringify(shipAddress));
   console.log("createOrder payMent: ", JSON.stringify(paymentMethod));
   // testnout jestli sem leze co má
