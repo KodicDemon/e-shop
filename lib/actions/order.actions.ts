@@ -24,6 +24,7 @@ export async function createOrder(
   console.log("createOrder payMent: ", JSON.stringify(paymentMethod));
   // testnout jestli sem leze co má
   try {
+    // @ts-ignore
     let user: any; // asi userObject
 
     if (shipAddress == null && paymentMethod == null) {
@@ -33,7 +34,10 @@ export async function createOrder(
 
       const userId = session?.user?.id;
       if (!userId) throw new Error("User not found");
+
       user = await getUserById(userId);
+
+      console.log("stara kudnička", user);
 
       if (!user.paymentMethod) {
         return {
@@ -60,17 +64,6 @@ export async function createOrder(
         redirectTo: "/cart",
       };
     }
-
-    console.log("testObject: ", {
-      userId: shipAddress == null && paymentMethod == null ? user.id : null,
-      shippingAddress: shipAddress == null ? user.address : shipAddress, // nevim, jestli shipAddress ma stejny format jako user.address
-      paymentMethod:
-        paymentMethod == null ? user.paymentMethod : paymentMethod.type, // nevim, jestli paymentMethod ma stejny format jako user.paymentMethod
-      itemsPrice: cart.itemsPrice,
-      shippingPrice: cart.shippingPrice,
-      taxPrice: cart.taxPrice,
-      totalPrice: cart.totalPrice,
-    });
 
     // Create order object
     const order = insertOrderSchema.parse({
