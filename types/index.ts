@@ -41,3 +41,23 @@ export type Review = z.infer<typeof insertReviewSchema> & {
   createdAt: Date;
   user?: { name: string };
 };
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: Date | null;
+  image: string | null;
+  password: string | null;
+  role: string;
+  address: {
+    fullName: string;
+    streetAddress: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  } | null; // Přetypování address z JSON
+  paymentMethod: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};

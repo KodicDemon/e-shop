@@ -7,7 +7,7 @@ import { getMyCart } from "./cart.actions";
 import { getUserById } from "./user.actions";
 import { insertOrderSchema } from "../validators";
 import { prisma } from "@/db/prisma";
-import { CartItem, PaymentResult, ShippingAddress } from "@/types";
+import { CartItem, PaymentResult, ShippingAddress, User } from "@/types";
 import { paypal } from "../paypal";
 import { revalidatePath } from "next/cache";
 import { PAGE_SIZE } from "../constants";
@@ -24,8 +24,7 @@ export async function createOrder(
   console.log("createOrder payMent: ", JSON.stringify(paymentMethod));
   // testnout jestli sem leze co má
   try {
-    //@ts-expect-error
-    let user: typeof user;
+    let user: User | null = null;
 
     if (shipAddress == null && paymentMethod == null) {
       //jsi prihlaseny, shipAddress a paymentMethod jsou prazdné (nic jsi tam jako anonym neukladal do coockies)
@@ -35,7 +34,11 @@ export async function createOrder(
       const userId = session?.user?.id;
       if (!userId) throw new Error("User not found");
 
-      user = await getUserById(userId);
+      const rawUser = await getUserById(userId);
+      user = {
+        ...rawUser,
+        address: rawUser.address as User["address"], // Přetypování JSON na objekt
+      };
 
       console.log("stara kudnička", user);
 
@@ -67,10 +70,10 @@ export async function createOrder(
 
     // Create order object
     const order = insertOrderSchema.parse({
-      userId: shipAddress == null && paymentMethod == null ? user.id : null,
-      shippingAddress: shipAddress == null ? user.address : shipAddress, // nevim, jestli shipAddress ma stejny format jako user.address
+      userId: shipAddress == null && paymentMethod == null ? user?.id : null,
+      shippingAddress: shipAddress == null ? user?.address : shipAddress, // nevim, jestli shipAddress ma stejny format jako user.address
       paymentMethod:
-        paymentMethod == null ? user.paymentMethod : paymentMethod.type, // nevim, jestli paymentMethod ma stejny format jako user.paymentMethod
+        paymentMethod == null ? user?.paymentMethod : paymentMethod.type, // nevim, jestli paymentMethod ma stejny format jako user.paymentMethod
       itemsPrice: cart.itemsPrice,
       shippingPrice: cart.shippingPrice,
       taxPrice: cart.taxPrice,
